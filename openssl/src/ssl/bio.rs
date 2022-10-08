@@ -1,3 +1,5 @@
+use crate::cvt_p;
+use crate::error::ErrorStack;
 use cfg_if::cfg_if;
 use ffi::{
     self, BIO_clear_retry_flags, BIO_new, BIO_set_retry_read, BIO_set_retry_write, BIO,
@@ -11,21 +13,19 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 use std::slice;
 
-use crate::cvt_p;
-use crate::error::ErrorStack;
-
 pub struct StreamState<S> {
     pub stream: S,
     pub error: Option<io::Error>,
     pub panic: Option<Box<dyn Any + Send>>,
     pub dtls_mtu_size: c_long,
+    pub fd: Option<i32>,
 }
 
 /// Safe wrapper for `BIO_METHOD`
-pub struct BioMethod(BIO_METHOD);
+pub struct BioMethod(pub(super) BIO_METHOD);
 
 impl BioMethod {
-    fn new<S: Read + Write>() -> Result<BioMethod, ErrorStack> {
+    pub(super) fn new<S: Read + Write>() -> Result<BioMethod, ErrorStack> {
         BIO_METHOD::new::<S>().map(BioMethod)
     }
 }
@@ -41,6 +41,7 @@ pub fn new<S: Read + Write>(stream: S) -> Result<(*mut BIO, BioMethod), ErrorSta
         error: None,
         panic: None,
         dtls_mtu_size: 0,
+        fd: None,
     });
 
     unsafe {
@@ -148,7 +149,6 @@ unsafe extern "C" fn ctrl<S: Write>(
     _ptr: *mut c_void,
 ) -> c_long {
     let state = state::<S>(bio);
-
     if cmd == BIO_CTRL_FLUSH {
         match catch_unwind(AssertUnwindSafe(|| state.stream.flush())) {
             Ok(Ok(())) => 1,
@@ -198,7 +198,7 @@ cfg_if! {
         unsafe fn BIO_set_num(_bio: *mut ffi::BIO, _num: c_int) {}
 
         #[allow(bad_style, clippy::upper_case_acronyms)]
-        struct BIO_METHOD(*mut ffi::BIO_METHOD);
+        pub(super) struct BIO_METHOD(*mut ffi::BIO_METHOD);
 
         impl BIO_METHOD {
             fn new<S: Read + Write>() -> Result<BIO_METHOD, ErrorStack> {
@@ -215,7 +215,7 @@ cfg_if! {
                 }
             }
 
-            fn get(&self) -> *mut ffi::BIO_METHOD {
+            pub(super) fn get(&self) -> *mut ffi::BIO_METHOD {
                 self.0
             }
         }
@@ -229,7 +229,7 @@ cfg_if! {
         }
     } else {
         #[allow(bad_style, clippy::upper_case_acronyms)]
-        struct BIO_METHOD(*mut ffi::BIO_METHOD);
+        pub(super) struct BIO_METHOD(*mut ffi::BIO_METHOD);
 
         impl BIO_METHOD {
             fn new<S: Read + Write>() -> Result<BIO_METHOD, ErrorStack> {

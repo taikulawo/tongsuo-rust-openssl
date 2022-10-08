@@ -632,7 +632,6 @@ impl PKey<Private> {
             Ok(PKey::from_ptr(ptr))
         }
     }
-
     private_key_from_pem! {
         /// Deserializes a private key from a PEM-encoded key type specific format.
         #[corresponds(PEM_read_bio_PrivateKey)]

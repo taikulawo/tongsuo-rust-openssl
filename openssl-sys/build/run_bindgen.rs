@@ -57,7 +57,7 @@ pub fn run(include_dirs: &[PathBuf]) {
         .ctypes_prefix("::libc")
         .raw_line("use libc::*;")
         .raw_line("type evp_pkey_st = EVP_PKEY;")
-        .allowlist_file(".*/openssl/[^/]+\\.h")
+        // .allowlist_file(".*/openssl/[^/]+\\.h")
         .allowlist_recursively(false)
         // libc is missing pthread_once_t on macOS
         .blocklist_type("CRYPTO_ONCE")
@@ -68,6 +68,12 @@ pub fn run(include_dirs: &[PathBuf]) {
         .blocklist_function("ERR_vset_error")
         .blocklist_function("ERR_add_error_vdata")
         .blocklist_function("EVP_KDF_vctrl")
+        .blocklist_function("qfcvt_r")
+        .blocklist_function("qfcvt")
+        .blocklist_function("strtold")
+        .blocklist_function("qecvt_r")
+        .blocklist_function("qecvt")
+        .blocklist_function("qgcvt")
         .blocklist_type("OSSL_FUNC_core_vset_error_fn")
         .blocklist_type("OSSL_FUNC_BIO_vprintf_fn")
         .blocklist_type("OSSL_FUNC_BIO_vsnprintf_fn")
@@ -79,7 +85,8 @@ pub fn run(include_dirs: &[PathBuf]) {
         .blocklist_type("EVP_PKEY")
         .blocklist_type("evp_pkey_st")
         .layout_tests(false)
-        .header_contents("includes.h", INCLUDES);
+        .header_contents("includes.h", INCLUDES)
+        .size_t_is_usize(true);
 
     for include_dir in include_dirs {
         builder = builder

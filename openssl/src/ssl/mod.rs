@@ -71,7 +71,11 @@ use crate::pkey::{HasPrivate, PKeyRef, Params, Private};
 use crate::srtp::{SrtpProtectionProfile, SrtpProtectionProfileRef};
 use crate::ssl::bio::BioMethod;
 use crate::ssl::callbacks::*;
+pub use crate::ssl::connector::{
+    ConnectConfiguration, SslAcceptor, SslAcceptorBuilder, SslConnector, SslConnectorBuilder,
+};
 use crate::ssl::error::InnerError;
+pub use crate::ssl::error::{Error, ErrorCode, HandshakeError};
 use crate::stack::{Stack, StackRef};
 use crate::util::{ForeignTypeExt, ForeignTypeRefExt};
 use crate::x509::store::{X509Store, X509StoreBuilderRef, X509StoreRef};
@@ -101,18 +105,14 @@ use std::ptr;
 use std::slice;
 use std::str;
 use std::sync::{Arc, Mutex};
-
-pub use crate::ssl::connector::{
-    ConnectConfiguration, SslAcceptor, SslAcceptorBuilder, SslConnector, SslConnectorBuilder,
-};
-pub use crate::ssl::error::{Error, ErrorCode, HandshakeError};
-
 mod bio;
 mod callbacks;
 mod connector;
 mod error;
 #[cfg(test)]
 mod test;
+#[cfg(feature = "tongsuo")]
+pub mod tongsuo;
 
 /// Returns the OpenSSL name of a cipher corresponding to an RFC-standard cipher name.
 ///
@@ -3381,6 +3381,7 @@ impl<S: Read + Write> SslStream<S> {
     /// [`SslRef::set_accept_state`], the handshake can be performed automatically during the first
     /// call to read or write. Otherwise the `connect` and `accept` methods can be used to
     /// explicitly perform the handshake.
+    ///
     #[corresponds(SSL_set_bio)]
     pub fn new(ssl: Ssl, stream: S) -> Result<Self, ErrorStack> {
         let (bio, method) = bio::new(stream)?;
@@ -3394,7 +3395,6 @@ impl<S: Read + Write> SslStream<S> {
             _p: PhantomData,
         })
     }
-
     /// Constructs an `SslStream` from a pointer to the underlying OpenSSL `SSL` struct.
     ///
     /// This is useful if the handshake has already been completed elsewhere.
