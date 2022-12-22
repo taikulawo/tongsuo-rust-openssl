@@ -61,7 +61,7 @@ impl SslRef {
             .as_ref()
             .as_os_str()
             .to_str()
-            .ok_or(anyhow!("path is none"))?;
+            .ok_or_else(|| anyhow!("path is none"))?;
         let key_file = CString::new(p).map_err(|_| anyhow!("invalid cstring"))?;
         unsafe {
             cvt(ffi::SSL_use_PrivateKey_file(
@@ -99,7 +99,7 @@ impl SslRef {
             .as_ref()
             .as_os_str()
             .to_str()
-            .ok_or(anyhow!("path is none"))?;
+            .ok_or_else(|| anyhow!("path is none"))?;
         let cert_file = CString::new(p).map_err(|_| anyhow!("invalid cstring"))?;
         unsafe {
             cvt(ffi::SSL_use_certificate_chain_file(
