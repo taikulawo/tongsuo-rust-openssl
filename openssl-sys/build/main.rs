@@ -154,7 +154,7 @@ fn check_rustc_versions() {
 fn postprocess(include_dirs: &[PathBuf]) -> Version {
     let version = validate_headers(include_dirs);
     #[cfg(feature = "bindgen")]
-    run_bindgen::run(&include_dirs);
+    run_bindgen::run(include_dirs);
 
     version
 }
@@ -465,7 +465,7 @@ fn compile_tongsuo_openssl() {
     cmd.spawn().expect("configure").wait().unwrap();
 
     Command::new("make")
-        .current_dir(os_folder.clone())
+        .current_dir(os_folder)
         .arg("-j")
         .spawn()
         .expect("make -j")

@@ -26,7 +26,7 @@ impl SslRef {
             let mut ptr = ptr::null();
             let tmp: *mut *const _ = &mut ptr;
             let len = ffi::SSL_client_hello_get0_ciphers(self.as_ptr(), tmp as *mut _);
-            let ciphers = slice::from_raw_parts::<u16>(ptr, len as usize);
+            let ciphers = slice::from_raw_parts::<u16>(ptr, len);
             for index in ciphers {
                 let c = ffi::SSL_CIPHER_find(self.as_ptr(), index as *const _ as *const _);
                 let name = ffi::SSL_CIPHER_get_name(c);
