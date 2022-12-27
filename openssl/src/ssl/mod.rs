@@ -3283,7 +3283,7 @@ impl SslRef {
             Ok(())
         }
     }
-    #[corresponds(SSL_CTX_set_min_proto_version)]
+    #[corresponds(SSL_set_min_proto_version)]
     #[cfg(any(ossl110, libressl261))]
     pub fn set_min_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
         unsafe {
@@ -3301,7 +3301,7 @@ impl SslRef {
     /// OpenSSL.
     ///
     /// Requires OpenSSL 1.1.0 or or LibreSSL 2.6.1 or newer.
-    #[corresponds(SSL_CTX_set_max_proto_version)]
+    #[corresponds(SSL_set_max_proto_version)]
     #[cfg(any(ossl110, libressl261))]
     pub fn set_max_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
         unsafe {
