@@ -3283,6 +3283,35 @@ impl SslRef {
             Ok(())
         }
     }
+    #[corresponds(SSL_CTX_set_min_proto_version)]
+    #[cfg(any(ossl110, libressl261))]
+    pub fn set_min_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
+        unsafe {
+            cvt(ffi::SSL_set_min_proto_version(
+                self.as_ptr(),
+                version.map_or(0, |v| v.0 as _),
+            ))
+            .map(|_| ())
+        }
+    }
+
+    /// Sets the maximum supported protocol version.
+    ///
+    /// A value of `None` will enable protocol versions down the the highest version supported by
+    /// OpenSSL.
+    ///
+    /// Requires OpenSSL 1.1.0 or or LibreSSL 2.6.1 or newer.
+    #[corresponds(SSL_CTX_set_max_proto_version)]
+    #[cfg(any(ossl110, libressl261))]
+    pub fn set_max_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
+        unsafe {
+            cvt(ffi::SSL_set_max_proto_version(
+                self.as_ptr(),
+                version.map_or(0, |v| v.0 as _),
+            ))
+            .map(|_| ())
+        }
+    }
 }
 
 /// An SSL stream midway through the handshake process.
