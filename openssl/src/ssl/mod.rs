@@ -3335,6 +3335,13 @@ impl SslRef {
             .map(|_| ())
         }
     }
+    #[corresponds(SSL_set_cert_store)]
+    pub fn set_cert_store(&mut self, cert_store: X509Store) {
+        unsafe {
+            ffi::SSL_set0_verify_cert_store(self.as_ptr(), cert_store.as_ptr());
+            mem::forget(cert_store);
+        }
+    }
 }
 
 /// An SSL stream midway through the handshake process.
