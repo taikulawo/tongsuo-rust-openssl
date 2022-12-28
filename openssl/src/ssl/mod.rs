@@ -3312,6 +3312,29 @@ impl SslRef {
             .map(|_| ())
         }
     }
+    #[corresponds(SSL_set_ciphersuites)]
+    #[cfg(any(ossl111, libressl340))]
+    pub fn set_ciphersuites(&mut self, cipher_list: &str) -> Result<(), ErrorStack> {
+        let cipher_list = CString::new(cipher_list).unwrap();
+        unsafe {
+            cvt(ffi::SSL_set_ciphersuites(
+                self.as_ptr(),
+                cipher_list.as_ptr() as *const _,
+            ))
+            .map(|_| ())
+        }
+    }
+    #[corresponds(SSL_set_cipher_list)]
+    pub fn set_cipher_list(&mut self, cipher_list: &str) -> Result<(), ErrorStack> {
+        let cipher_list = CString::new(cipher_list).unwrap();
+        unsafe {
+            cvt(ffi::SSL_set_cipher_list(
+                self.as_ptr(),
+                cipher_list.as_ptr() as *const _,
+            ))
+            .map(|_| ())
+        }
+    }
 }
 
 /// An SSL stream midway through the handshake process.
