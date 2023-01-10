@@ -1,5 +1,4 @@
 use crate::{cvt, error::ErrorStack};
-use anyhow::anyhow;
 use std::{
     ffi::{c_int, CString},
     mem,
@@ -10,7 +9,6 @@ use super::{ClientHelloResponse, SslContextBuilder, SslFiletype, SslMethod, SslR
 use crate::{pkey, x509::X509};
 use ffi::NTLS_method;
 use foreign_types::{ForeignType, ForeignTypeRef};
-use openssl_macros::corresponds;
 #[cfg(ossl111)]
 impl ClientHelloResponse {
     pub const ERROR: ClientHelloResponse = ClientHelloResponse(ffi::SSL_CLIENT_HELLO_ERROR);
@@ -36,11 +34,6 @@ impl SslRef {
             lists
         }
     }
-    pub fn set_ssl_method(&mut self, method: SslMethod) {
-        unsafe {
-            ffi::SSL_set_ssl_method(self.as_ptr(), method.as_ptr());
-        }
-    }
     pub fn disable_ntls(&mut self) {
         unsafe {
             ffi::SSL_disable_ntls(self.as_ptr());
@@ -50,64 +43,6 @@ impl SslRef {
         unsafe {
             ffi::SSL_enable_ntls(self.as_ptr());
         }
-    }
-    #[corresponds(SSL_use_Private_Key_file)]
-    pub fn set_private_key_file<P: AsRef<Path>>(
-        &mut self,
-        path: P,
-        ssl_file_type: SslFiletype,
-    ) -> anyhow::Result<()> {
-        let p = path
-            .as_ref()
-            .as_os_str()
-            .to_str()
-            .ok_or_else(|| anyhow!("path is none"))?;
-        let key_file = CString::new(p).map_err(|_| anyhow!("invalid cstring"))?;
-        unsafe {
-            cvt(ffi::SSL_use_PrivateKey_file(
-                self.as_ptr(),
-                key_file.as_ptr(),
-                ssl_file_type.as_raw(),
-            ))?;
-        };
-        Ok(())
-    }
-    #[corresponds(SSL_use_PrivateKey)]
-    pub fn use_private_key_pem(&mut self, key: &[u8]) -> Result<(), ErrorStack> {
-        let pkey = pkey::PKey::private_key_from_pem(key)?;
-        unsafe {
-            // take ownership of pkey
-            cvt(ffi::SSL_use_PrivateKey(self.as_ptr(), pkey.as_ptr()))?;
-        };
-        mem::forget(pkey);
-        Ok(())
-    }
-    #[corresponds(SSL_use_certificate)]
-    pub fn use_certificate_pem(&mut self, cert: &[u8]) -> Result<(), ErrorStack> {
-        let cert = X509::from_pem(cert)?;
-        unsafe {
-            // take ownership of cert
-            cvt(ffi::SSL_use_certificate(self.as_ptr(), cert.as_ptr()))?;
-        };
-        mem::forget(cert);
-        Ok(())
-    }
-
-    #[corresponds(SSL_use_certificate_chain_file)]
-    pub fn set_certificate_chain_file<P: AsRef<Path>>(&mut self, path: P) -> anyhow::Result<()> {
-        let p = path
-            .as_ref()
-            .as_os_str()
-            .to_str()
-            .ok_or_else(|| anyhow!("path is none"))?;
-        let cert_file = CString::new(p).map_err(|_| anyhow!("invalid cstring"))?;
-        unsafe {
-            cvt(ffi::SSL_use_certificate_chain_file(
-                self.as_ptr(),
-                cert_file.as_ptr(),
-            ))?;
-        };
-        Ok(())
     }
     pub fn use_ntls_key_content_and_cert_content_pem(
         &mut self,

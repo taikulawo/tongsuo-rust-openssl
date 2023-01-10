@@ -3283,65 +3283,6 @@ impl SslRef {
             Ok(())
         }
     }
-    #[corresponds(SSL_set_min_proto_version)]
-    #[cfg(any(ossl110, libressl261))]
-    pub fn set_min_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
-        unsafe {
-            cvt(ffi::SSL_set_min_proto_version(
-                self.as_ptr(),
-                version.map_or(0, |v| v.0 as _),
-            ))
-            .map(|_| ())
-        }
-    }
-
-    /// Sets the maximum supported protocol version.
-    ///
-    /// A value of `None` will enable protocol versions down the the highest version supported by
-    /// OpenSSL.
-    ///
-    /// Requires OpenSSL 1.1.0 or or LibreSSL 2.6.1 or newer.
-    #[corresponds(SSL_set_max_proto_version)]
-    #[cfg(any(ossl110, libressl261))]
-    pub fn set_max_proto_version(&mut self, version: Option<SslVersion>) -> Result<(), ErrorStack> {
-        unsafe {
-            cvt(ffi::SSL_set_max_proto_version(
-                self.as_ptr(),
-                version.map_or(0, |v| v.0 as _),
-            ))
-            .map(|_| ())
-        }
-    }
-    #[corresponds(SSL_set_ciphersuites)]
-    #[cfg(any(ossl111, libressl340))]
-    pub fn set_ciphersuites(&mut self, cipher_list: &str) -> Result<(), ErrorStack> {
-        let cipher_list = CString::new(cipher_list).unwrap();
-        unsafe {
-            cvt(ffi::SSL_set_ciphersuites(
-                self.as_ptr(),
-                cipher_list.as_ptr() as *const _,
-            ))
-            .map(|_| ())
-        }
-    }
-    #[corresponds(SSL_set_cipher_list)]
-    pub fn set_cipher_list(&mut self, cipher_list: &str) -> Result<(), ErrorStack> {
-        let cipher_list = CString::new(cipher_list).unwrap();
-        unsafe {
-            cvt(ffi::SSL_set_cipher_list(
-                self.as_ptr(),
-                cipher_list.as_ptr() as *const _,
-            ))
-            .map(|_| ())
-        }
-    }
-    #[corresponds(SSL_set_cert_store)]
-    pub fn set_cert_store(&mut self, cert_store: X509Store) {
-        unsafe {
-            ffi::SSL_set0_verify_cert_store(self.as_ptr(), cert_store.as_ptr());
-            mem::forget(cert_store);
-        }
-    }
 }
 
 /// An SSL stream midway through the handshake process.
