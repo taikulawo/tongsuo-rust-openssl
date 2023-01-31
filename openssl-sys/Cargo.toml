@@ -16,6 +16,7 @@ build = "build/main.rs"
 [features]
 vendored = ['openssl-src']
 unstable_boringssl = ['bssl-sys']
+tongsuo = []
 
 [dependencies]
 libc = "0.2"

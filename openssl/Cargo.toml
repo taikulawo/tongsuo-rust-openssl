@@ -19,9 +19,11 @@ v111 = []
 tokio = ["dep:futures-util", "dep:tokio"]
 vendored = ['ffi/vendored']
 bindgen = ['ffi/bindgen']
-tongsuo = ["bindgen"]
+# 开启后link到tongsuo
+# 否则link openssl
+tongsuo = ["bindgen", "ffi/tongsuo"]
 unstable_boringssl = ["ffi/unstable_boringssl"]
-default = ["tongsuo", "tokio"]
+default = []
 [dependencies]
 bitflags = "1.0"
 cfg-if = "1.0"

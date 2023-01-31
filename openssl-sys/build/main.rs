@@ -72,16 +72,19 @@ fn check_ssl_kind() {
 }
 
 fn main() {
-    let root = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let path_root = PathBuf::from(root);
-    let root_dir = path_root.join("tongsuo");
-    let include_dir = root_dir.join("include");
-    env::set_var("OPENSSL_LIB_DIR", root_dir);
-    env::set_var("OPENSSL_INCLUDE_DIR", include_dir);
-    // 静态链接
-    env::set_var("OPENSSL_STATIC", "1");
+    #[cfg(feature = "tongsuo")]
+    {
+        let root = env::var("CARGO_MANIFEST_DIR").unwrap();
+        let path_root = PathBuf::from(root);
+        let root_dir = path_root.join("tongsuo");
+        let include_dir = root_dir.join("include");
+        env::set_var("OPENSSL_LIB_DIR", root_dir);
+        env::set_var("OPENSSL_INCLUDE_DIR", include_dir);
+        // 静态链接
+        env::set_var("OPENSSL_STATIC", "1");
 
-    compile_tongsuo_openssl();
+        compile_tongsuo_openssl();
+    }
     check_rustc_versions();
 
     check_ssl_kind();
