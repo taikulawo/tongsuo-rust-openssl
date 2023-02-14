@@ -14,6 +14,41 @@ impl ClientHelloResponse {
     pub const ERROR: ClientHelloResponse = ClientHelloResponse(ffi::SSL_CLIENT_HELLO_ERROR);
 }
 
+impl SslContextBuilder {
+    pub fn use_ntls_key_content_and_cert_content_pem(
+        &mut self,
+        sign_private_key_content: &[u8],
+        sign_cert_content: &[u8],
+        enc_private_key_content: &[u8],
+        enc_cert_content: &[u8],
+    ) -> Result<(), ErrorStack> {
+        let sign_pkey = pkey::PKey::private_key_from_pem(sign_private_key_content)?;
+        let sign_cert = X509::from_pem(sign_cert_content)?;
+        let enc_pkey = pkey::PKey::private_key_from_pem(enc_private_key_content)?;
+        let enc_cert = X509::from_pem(enc_cert_content)?;
+        unsafe {
+            cvt(ffi::SSL_CTX_use_sign_PrivateKey(
+                self.as_ptr(),
+                sign_pkey.as_ptr(),
+            ))?;
+            cvt(ffi::SSL_CTX_use_sign_certificate(
+                self.as_ptr(),
+                sign_cert.as_ptr(),
+            ))?;
+            cvt(ffi::SSL_CTX_use_enc_PrivateKey(
+                self.as_ptr(),
+                enc_pkey.as_ptr(),
+            ))?;
+            cvt(ffi::SSL_CTX_use_enc_certificate(
+                self.as_ptr(),
+                enc_cert.as_ptr(),
+            ))?;
+        };
+
+        Ok(())
+    }
+}
+
 impl SslRef {
     /// 只能在client hello callback中调用
     pub fn get_client_cipher_list_name(&mut self) -> Vec<String> {
@@ -62,17 +97,14 @@ impl SslRef {
                 self.as_ptr(),
                 sign_pkey.as_ptr(),
             ))?;
-            mem::forget(sign_pkey);
             cvt(ffi::SSL_use_sign_certificate(
                 self.as_ptr(),
                 sign_cert.as_ptr(),
             ))?;
-            mem::forget(sign_cert);
             cvt(ffi::SSL_use_enc_PrivateKey(
                 self.as_ptr(),
                 enc_pkey.as_ptr(),
             ))?;
-            mem::forget(enc_pkey);
             cvt(ffi::SSL_use_enc_certificate(
                 self.as_ptr(),
                 enc_cert.as_ptr(),
