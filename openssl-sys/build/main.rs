@@ -431,14 +431,15 @@ fn compile_tongsuo_openssl() {
     println!("cargo:rustc-link-search={}", &*os_folder);
     // https://wiki.openssl.org/index.php/Compilation_and_Installation#Configure_Options
     let debug = env::var("DEBUG").unwrap();
-    Command::new("make")
+    if let Err(err) = Command::new("make")
         .current_dir(os_folder.clone())
         .arg("clean")
         .spawn()
         .expect("make clean")
         .wait()
-        .unwrap();
-
+    {
+        println!("{}", err)
+    }
     // 取消注释看env
     // for e in env::vars() {
     //     p!("{:?}={:?}", e.0, e.1);
