@@ -424,6 +424,8 @@ fn determine_mode(libdirs: &[PathBuf], libs: &[&str]) -> &'static str {
     // practices with security libs", let's link dynamically.
     "dylib"
 }
+
+#[cfg(feature = "tongsuo")]
 fn compile_tongsuo_openssl() {
     // println!("cargo:rustc-link-lib=static=ssl");
     // println!("cargo:rustc-link-lib=static=crypto");
