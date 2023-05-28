@@ -1,6 +1,6 @@
 # Babassl Rust bindings
 
-openssl-sys/tongsuo 基于 tongsuo-src-rs(https://github.com/zh-jq/tongsuo-src-rss)
+openssl-sys/tongsuo 基于 tongsuo-src-rs(https://github.com/zh-jq/tongsuo-src-rs)
 
 兼容openssl 1.1.1
 
