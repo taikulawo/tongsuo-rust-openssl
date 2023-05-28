@@ -1477,3 +1477,66 @@ fn test_ssl_set_cert_chain_file() {
     let mut ssl = Ssl::new(&ctx).unwrap();
     ssl.set_certificate_chain_file("test/cert.pem").unwrap();
 }
+
+#[test]
+fn verify_ntls_untrusted() {
+    let mut server = Server::builder();
+    server.should_error();
+    server.ctx().enable_ntls();
+
+    let server = server.build();
+
+    let mut client = server.client();
+    client.ctx().enable_ntls();
+    client.ctx().set_verify(SslVerifyMode::PEER);
+
+    client.connect_err();
+}
+
+#[test]
+fn client_ntls_hello() {
+
+    static CALLED_BACK: AtomicBool = AtomicBool::new(false);
+
+    let mut server = Server::builder();
+    server.ctx().enable_ntls();
+    server.ctx().set_client_hello_callback(|ssl, _| {
+        assert!(!ssl.client_hello_isv2());
+        assert_eq!(ssl.client_hello_legacy_version(), Some(SslVersion::TLS1_1));
+        assert!(ssl.client_hello_random().is_some());
+        assert!(ssl.client_hello_session_id().is_some());
+        assert!(ssl.client_hello_ciphers().is_some());
+        assert!(ssl.client_hello_compression_methods().is_some());
+
+        CALLED_BACK.store(true, Ordering::SeqCst);
+        Ok(ClientHelloResponse::SUCCESS)
+    });
+
+    let server = server.build();
+    let mut client = server.client();
+    client.ctx().enable_ntls();
+    client.connect();
+
+    assert!(CALLED_BACK.load(Ordering::SeqCst));
+}
+
+fn test_ntls_client(new: fn(SslMethod) -> Result<SslAcceptorBuilder, ErrorStack>) {
+
+    let mut connector = SslConnector::builder(SslMethod::tls()).unwrap();
+    //connector.set_ca_file("test/root-ca.pem").unwrap();
+    connector.enable_ntls();
+    //connector.set_servername_callback();
+
+    let connector = connector.build();
+    let stream = TcpStream::connect(("192.168.1.8", 8443)).unwrap();
+    let mut stream = connector.connect("git.swbt.site", stream).unwrap();
+
+    let mut buf = [0; 5];
+    stream.read_exact(&mut buf).unwrap();
+    assert_eq!(b"hello", &buf);
+}
+
+#[test]
+fn test_ntls_server() {
+    test_ntls_client(SslAcceptor::mozilla_intermediate);
+}

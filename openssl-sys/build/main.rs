@@ -5,7 +5,7 @@ extern crate autocfg;
 extern crate bindgen;
 extern crate cc;
 #[cfg(feature = "vendored")]
-extern crate openssl_src;
+extern crate tongsuo_src;
 extern crate pkg_config;
 #[cfg(target_env = "msvc")]
 extern crate vcpkg;
