@@ -755,7 +755,7 @@ fn test_set_purpose_fails_verification() {
     store_bldr.set_param(&verify_params).unwrap();
     let store = store_bldr.build();
 
-    let expected_error = "unsupported certificate purpose";
+    let expected_error = "unsuitable certificate purpose";
     let mut context = X509StoreContext::new().unwrap();
     assert_eq!(
         context

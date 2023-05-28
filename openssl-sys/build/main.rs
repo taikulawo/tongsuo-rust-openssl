@@ -5,7 +5,7 @@ extern crate autocfg;
 extern crate bindgen;
 extern crate cc;
 #[cfg(feature = "vendored")]
-extern crate openssl_src;
+extern crate tongsuo_p832_src;
 extern crate pkg_config;
 #[cfg(target_env = "msvc")]
 extern crate vcpkg;
@@ -78,12 +78,13 @@ fn main() {
         let path_root = PathBuf::from(root);
         let root_dir = path_root.join("tongsuo");
         let include_dir = root_dir.join("include");
-        env::set_var("OPENSSL_LIB_DIR", root_dir);
-        env::set_var("OPENSSL_INCLUDE_DIR", include_dir);
-        // 静态链接
-        env::set_var("OPENSSL_STATIC", "1");
 
-        compile_tongsuo_openssl();
+        //use tongsuo-src-rs instead of fixed version.
+            //env::set_var("OPENSSL_LIB_DIR", root_dir);
+            //env::set_var("OPENSSL_INCLUDE_DIR", include_dir);
+            // 静态链接
+            //env::set_var("OPENSSL_STATIC", "1");
+            //compile_tongsuo_openssl();
     }
     check_rustc_versions();
 

@@ -1477,3 +1477,69 @@ fn test_ssl_set_cert_chain_file() {
     let mut ssl = Ssl::new(&ctx).unwrap();
     ssl.set_certificate_chain_file("test/cert.pem").unwrap();
 }
+
+#[test]
+fn verify_ntls_untrusted() {
+    let mut server = Server::builder();
+    server.should_error();
+    server.ctx().enable_ntls();
+
+    let server = server.build();
+
+    let mut client = server.client();
+    client.ctx().enable_ntls();
+    client.ctx().set_verify(SslVerifyMode::PEER);
+
+    client.connect_err();
+}
+
+#[test]
+fn client_ntls_hello() {
+
+    static CALLED_BACK: AtomicBool = AtomicBool::new(false);
+
+    let mut server = Server::builder();
+    server.ctx().enable_ntls();
+    server.ctx().set_client_hello_callback(|ssl, _| {
+        assert!(!ssl.client_hello_isv2());
+        assert_eq!(ssl.client_hello_legacy_version(), Some(SslVersion::TLS1_2));
+        assert!(ssl.client_hello_random().is_some());
+        assert!(ssl.client_hello_session_id().is_some());
+        assert!(ssl.client_hello_ciphers().is_some());
+        assert!(ssl.client_hello_compression_methods().is_some());
+
+        CALLED_BACK.store(true, Ordering::SeqCst);
+        Ok(ClientHelloResponse::SUCCESS)
+    });
+
+    let server = server.build();
+    let mut client = server.client();
+    client.ctx().enable_ntls();
+    client.connect();
+
+    assert!(CALLED_BACK.load(Ordering::SeqCst));
+}
+
+#[test]
+fn test_ntls_client() {
+
+    let mut connector = SslConnector::builder(SslMethod::ntls()).unwrap();
+    connector.enable_ntls();
+    connector.set_ca_file("test/GMCert_GMCA01.cert.pem");
+
+    let connector = connector.build();
+    let stream = TcpStream::connect(("git.swbt.site", 8443)).unwrap();
+    let mut stream = connector.connect("git.swbt.site", stream).unwrap();
+    stream.check_panic();
+    stream.get_bio_error();
+
+    stream.write_all("GET / HTTP/1.1\n\
+        Host:git.swbt.site\n\
+        User-Agent:tongsuo-8.3.2\
+        \n\r\n\r\n".to_string().as_bytes());
+
+    let mut buf = [0;240];
+    stream.read_exact(&mut buf);
+    println!("{:?}",String::from_utf8_lossy(&buf));
+    assert_eq!(buf.len()>200,true);
+}
