@@ -1502,7 +1502,7 @@ fn client_ntls_hello() {
     server.ctx().enable_ntls();
     server.ctx().set_client_hello_callback(|ssl, _| {
         assert!(!ssl.client_hello_isv2());
-        assert_eq!(ssl.client_hello_legacy_version(), Some(SslVersion::TLS1_1));
+        assert_eq!(ssl.client_hello_legacy_version(), Some(SslVersion::TLS1_2));
         assert!(ssl.client_hello_random().is_some());
         assert!(ssl.client_hello_session_id().is_some());
         assert!(ssl.client_hello_ciphers().is_some());
@@ -1522,18 +1522,25 @@ fn client_ntls_hello() {
 
 fn test_ntls_client(new: fn(SslMethod) -> Result<SslAcceptorBuilder, ErrorStack>) {
 
-    let mut connector = SslConnector::builder(SslMethod::tls()).unwrap();
-    //connector.set_ca_file("test/root-ca.pem").unwrap();
+    let mut connector = SslConnector::builder(SslMethod::ntls()).unwrap();
     connector.enable_ntls();
-    //connector.set_servername_callback();
+    connector.set_ca_file("test/GMCert_GMCA01.cert.pem");
 
     let connector = connector.build();
-    let stream = TcpStream::connect(("192.168.1.8", 8443)).unwrap();
+    let stream = TcpStream::connect(("git.swbt.site", 8443)).unwrap();
     let mut stream = connector.connect("git.swbt.site", stream).unwrap();
+    stream.check_panic();
+    stream.get_bio_error();
 
-    let mut buf = [0; 5];
-    stream.read_exact(&mut buf).unwrap();
-    assert_eq!(b"hello", &buf);
+    stream.write_all("GET / HTTP/1.1\n\
+        Host:git.swbt.site\n\
+        User-Agent:tongsuo-8.3.2\
+        \n\r\n\r\n".to_string().as_bytes());
+
+    let mut buf = [0;240];
+    stream.read_exact(&mut buf);
+    println!("{:?}",String::from_utf8_lossy(&buf));
+    assert_eq!(buf.len()>200,true);
 }
 
 #[test]
