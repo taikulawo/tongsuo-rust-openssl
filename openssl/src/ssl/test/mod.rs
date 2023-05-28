@@ -1520,7 +1520,8 @@ fn client_ntls_hello() {
     assert!(CALLED_BACK.load(Ordering::SeqCst));
 }
 
-fn test_ntls_client(new: fn(SslMethod) -> Result<SslAcceptorBuilder, ErrorStack>) {
+#[test]
+fn test_ntls_client() {
 
     let mut connector = SslConnector::builder(SslMethod::ntls()).unwrap();
     connector.enable_ntls();
@@ -1541,9 +1542,4 @@ fn test_ntls_client(new: fn(SslMethod) -> Result<SslAcceptorBuilder, ErrorStack>
     stream.read_exact(&mut buf);
     println!("{:?}",String::from_utf8_lossy(&buf));
     assert_eq!(buf.len()>200,true);
-}
-
-#[test]
-fn test_ntls_server() {
-    test_ntls_client(SslAcceptor::mozilla_intermediate);
 }
